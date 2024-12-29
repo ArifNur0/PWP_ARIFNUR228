@@ -12,6 +12,12 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def home():
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))  # Jika sudah login, arahkan ke dashboard
+    return redirect(url_for('login'))  # Jika belum login, arahkan ke halaman login
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -41,6 +47,10 @@ def login():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    current_user = User.query.get(session['user_id'])
+    if not current_user.is_admin:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('login'))
     users = User.query.all()
     return render_template('dashboard.html', users=users)
 
@@ -50,7 +60,39 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
-# Implement CRUD operations for users here...
+@app.route('/add_user', methods=['GET', 'POST'])
+def add_user():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('User  added successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    return render_template('register.html', form=form)
+
+@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    form = RegistrationForm(obj=user)
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        if form.password.data:
+            user.set_password(form.password.data)
+        db.session.commit()
+        flash('User  updated successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    return render_template('edit_user.html', form=form, user=user)
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('User  deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)
