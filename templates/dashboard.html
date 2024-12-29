@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-bold">Dashboard</h2>
+<table class="min-w-full mt-4">
+    <thead>
+        <tr>
+            <th class="border px-4 py-2">ID</th>
+            <th class="border px-4 py-2">Username</th>
+            <th class="border px-4 py-2">Email</th>
+            <th class="border px-4 py-2">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td class="border px-4 py-2">{{ user.id }}</td>
+            <td class="border px-4 py-2">{{ user.username }}</td>
+            <td class="border px-4 py-2">{{ user.email }}</td>
+            <td class="border px-4 py-2">
+                <a href="{{ url_for('edit_user', user_id=user.id) }}" class="text-blue-500">Edit</a>
+                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="text-red-500">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('add_user') }}" class="mt-4 inline-block bg-blue-500 text-white p-2">Add User</a>
+{% endblock %}
